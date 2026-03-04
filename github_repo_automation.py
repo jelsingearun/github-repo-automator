@@ -47,9 +47,22 @@ def run_command(cmd, cwd=None, step="operation"):
 def sanitize_repo_name(name):
     try:
         name = name.lower()
+
+        # Strip common noisy suffixes added by GitHub ZIPs or downloads
+        # e.g. Academix-main → academix, MyProject-master-copy → myproject
+        noise_suffixes = r'(-main|-master|-develop|-dev|-release|-prod|-production|-copy|-backup|-new|-old|-v\d+[\d.]*|-\d+)$'
+        while True:
+            cleaned = re.sub(noise_suffixes, '', name)
+            if cleaned == name:
+                break
+            name = cleaned
+
+        # Replace anything that isn't alphanumeric, hyphen, or underscore
         name = re.sub(r'[^a-z0-9-_]', '-', name)
+        # Collapse multiple hyphens
         name = re.sub(r'-+', '-', name)
         name = name.strip("-")
+
         if not name:
             raise ValueError("Sanitized repo name is empty")  # (4.3)
         return name
